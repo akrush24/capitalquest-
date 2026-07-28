@@ -19,6 +19,17 @@ interface LanguageContextType {
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
+// Helper function for Russian pluralization of "год"
+const getNounPluralForm = (num: number): string => {
+  if (num % 10 === 1 && num % 100 !== 11) {
+    return 'год';
+  }
+  if ([2, 3, 4].includes(num % 10) && ![12, 13, 14].includes(num % 100)) {
+    return 'года';
+  }
+  return 'лет';
+};
+
 export const LanguageProvider = ({ children }: { children: ReactNode }) => {
   const [language, setLanguage] = useState('en');
 
@@ -30,9 +41,16 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
 
   const t = useCallback((key: string, replacements?: { [key: string]: string | number }) => {
     let translation = translations[language][key] || key;
+
     if (replacements) {
       Object.keys(replacements).forEach(placeholder => {
-        translation = translation.replace(`{${placeholder}}`, String(replacements[placeholder]));
+        if (language === 'ru' && placeholder === 'years' && typeof replacements[placeholder] === 'number') {
+          const numYears = replacements[placeholder] as number;
+          translation = translation.replace(`{${placeholder}}`, String(numYears));
+          translation = translation.replace('{years_plural}', getNounPluralForm(numYears));
+        } else {
+          translation = translation.replace(`{${placeholder}}`, String(replacements[placeholder]));
+        }
       });
     }
     return translation;

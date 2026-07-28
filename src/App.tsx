@@ -102,7 +102,7 @@ function App() {
         console.error("Failed to load state from URL:", error);
       }
     }
-  }, []);
+  }, [setLanguage, t]);
 
   const showAdvisorMessage = (key: string, duration: number = 8000) => {
     if (advisorTimeoutRef.current) {

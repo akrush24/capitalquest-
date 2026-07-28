@@ -18,7 +18,7 @@
   "difficulty_normal": "Нормальная",
   "difficulty_hard": "Тяжелая (События)",
   "yourKingdom": "Казна Королевства",
-  "inYears": "Через {years} лет",
+  "inYears": "Через {years} {years_plural}",
   "year": "Год {year}",
   "achievements": "Достижения",
   "eventLogTitle": "Летопись",
