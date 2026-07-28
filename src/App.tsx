@@ -52,9 +52,9 @@ function App() {
   const [baseParams, setBaseParams] = useState({
     initialDeposit: 50000,
     monthlyContribution: 10000,
-    years: 20,
-    annualRate: 8,
-    inflationRate: 2,
+    years: 4,
+    annualRate: 11,
+    inflationRate: 9,
   });
   const [isCompound, setIsCompound] = useState(true);
   const [difficulty, setDifficulty] = useState<Difficulty>('normal');
@@ -79,7 +79,7 @@ function App() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const encodedState = params.get('data');
-    const defaultParams = { initialDeposit: 50000, monthlyContribution: 10000, years: 20, annualRate: 8, inflationRate: 2 };
+    const defaultParams = { initialDeposit: 50000, monthlyContribution: 10000, years: 4, annualRate: 11, inflationRate: 9 };
 
     if (encodedState) {
       try {
