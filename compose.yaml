@@ -1,0 +1,30 @@
+services:
+  compound-quest:
+    build:
+      context: .
+    image: compound-quest:latest
+    restart: unless-stopped
+    networks:
+      - web
+
+  caddy:
+    image: caddy:2.10-alpine
+    restart: unless-stopped
+    depends_on:
+      - compound-quest
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - web
+
+networks:
+  web:
+
+volumes:
+  caddy_data:
+  caddy_config:

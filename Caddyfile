@@ -1,0 +1,4 @@
+akrush.ru {
+    encode zstd gzip
+    reverse_proxy compound-quest:8080
+}

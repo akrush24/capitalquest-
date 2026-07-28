@@ -7,18 +7,19 @@ export default {
   theme: {
     extend: {
       colors: {
-        gold: {
-          400: '#FFD700', // Soft Gold
-        },
-        green: {
-          400: '#39ff14', // Neon Green
-        }
+        'bg-main': '#2a1f1a',
+        'panel-bg': '#4a3f3a',
+        'text-main': '#e5d5b5',
+        'text-heading': '#eacda3',
+        'rich-gold': '#d4af37',
+        'forest-green': '#5a8c5a',
       },
       fontFamily: {
-        'cinzel': ['Cinzel', 'serif'],
+        'medieval': ['MedievalSharp', 'cursive'],
+        'lora': ['Lora', 'serif'],
       },
       boxShadow: {
-        'glow': '0 0 15px 1px rgba(57, 255, 20, 0.4)',
+        'glow': '0 0 15px 1px rgba(212, 175, 55, 0.4)',
       },
       keyframes: {
         'fade-in': {

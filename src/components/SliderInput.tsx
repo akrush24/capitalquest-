@@ -19,8 +19,8 @@ const SliderInput: React.FC<SliderInputProps> = ({ label, metaphor, value, onCha
   return (
     <div className="space-y-2">
       <div className="flex justify-between items-baseline">
-        <label className="font-semibold text-lg">{label}</label>
-        <span className="text-sm text-gray-400">{metaphor}</span>
+        <label className="font-semibold text-text-heading">{label}</label>
+        <span className="text-sm text-text-main italic">{metaphor}</span>
       </div>
       <div className="flex items-center space-x-4">
         <input
@@ -30,9 +30,9 @@ const SliderInput: React.FC<SliderInputProps> = ({ label, metaphor, value, onCha
           step={step}
           value={value}
           onChange={handleChange}
-          className="w-full h-3 bg-gray-700 rounded-lg appearance-none cursor-pointer range-lg"
+          className="w-full h-2 bg-bg-main rounded-lg appearance-none cursor-pointer"
         />
-        <div className="flex items-center bg-gray-700 rounded-md">
+        <div className="flex items-center bg-bg-main rounded-md border border-rich-gold/20">
            <input
             type="number"
             min={min}
@@ -40,9 +40,9 @@ const SliderInput: React.FC<SliderInputProps> = ({ label, metaphor, value, onCha
             step={step}
             value={value}
             onChange={handleChange}
-            className="bg-transparent w-36 text-center font-semibold text-lg p-2 focus:outline-none"
+            className="bg-transparent w-36 text-center font-semibold text-text-heading p-2 focus:outline-none"
           />
-          {unit && <span className="pr-3 text-gray-400">{unit}</span>}
+          {unit && <span className="pr-3 text-text-main">{unit}</span>}
         </div>
       </div>
     </div>

@@ -9,7 +9,7 @@ interface AnimatedNumberProps {
 const AnimatedNumber: React.FC<AnimatedNumberProps> = ({ value, className, currency }) => {
   const [displayValue, setDisplayValue] = useState(value);
   const prevValueRef = useRef(value);
-  const frameRef = useRef<number>();
+  const frameRef = useRef<number | null>(null);
 
   useEffect(() => {
     const startValue = prevValueRef.current;
@@ -35,7 +35,7 @@ const AnimatedNumber: React.FC<AnimatedNumberProps> = ({ value, className, curre
     frameRef.current = requestAnimationFrame(animate);
 
     return () => {
-      if (frameRef.current) {
+      if (frameRef.current !== null) {
         cancelAnimationFrame(frameRef.current);
       }
       prevValueRef.current = value;

@@ -1,5 +1,12 @@
 # React + TypeScript + Vite
 
+## Production deployment
+
+The application is a static single-page site. `docker compose up -d --build`
+builds it and starts Caddy as the public reverse proxy. Caddy automatically
+issues and renews the HTTPS certificate for `akrush.ru`; only ports 80 and 443
+are exposed, while the app container stays on an internal Docker network.
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:

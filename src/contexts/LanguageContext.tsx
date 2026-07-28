@@ -1,8 +1,15 @@
-import React, { createContext, useState, useEffect, useContext, ReactNode } from 'react';
+import { createContext, useState, useEffect, useContext, useCallback, useMemo } from 'react';
+import type { ReactNode } from 'react';
 import en from '../locales/en.json';
 import ru from '../locales/ru.json';
 
-const translations: { [key: string]: any } = { en, ru };
+import es from '../locales/es.json';
+import fr from '../locales/fr.json';
+import de from '../locales/de.json';
+import zh from '../locales/zh.json';
+
+const translations: { [key: string]: any } = { en, ru, es, fr, de, zh };
+const supportedLangs = ['en', 'ru', 'es', 'fr', 'de', 'zh'];
 
 interface LanguageContextType {
   language: string;
@@ -17,11 +24,11 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const browserLang = navigator.language.split('-')[0];
-    const initialLang = browserLang === 'ru' ? 'ru' : 'en';
+    const initialLang = supportedLangs.includes(browserLang) ? browserLang : 'en';
     setLanguage(initialLang);
   }, []);
 
-  const t = (key: string, replacements?: { [key: string]: string | number }) => {
+  const t = useCallback((key: string, replacements?: { [key: string]: string | number }) => {
     let translation = translations[language][key] || key;
     if (replacements) {
       Object.keys(replacements).forEach(placeholder => {
@@ -29,10 +36,12 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
       });
     }
     return translation;
-  };
+  }, [language]);
+
+  const value = useMemo(() => ({ language, setLanguage, t }), [language, t]);
 
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, t }}>
+    <LanguageContext.Provider value={value}>
       {children}
     </LanguageContext.Provider>
   );
