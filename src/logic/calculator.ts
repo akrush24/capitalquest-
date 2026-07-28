@@ -1,12 +1,19 @@
 import { processEvents } from './events';
 import type { IEventInstance } from './events';
 
+export interface IMonthData {
+  month: number;
+  value: number; // Value at the end of the month
+  contribution: number; // Monthly contribution (if any)
+  interest: number; // Interest gained in this month
+}
+
 export interface IYearData {
   year: number;
   value: number;
   interest: number;
   totalContributions: number;
-  gloryEarned: number;
+  months: IMonthData[]; // Array to store monthly breakdown
 }
 
 export type Difficulty = 'normal' | 'hard';
@@ -25,7 +32,7 @@ export interface ICalculatorParams {
   warImpactReduction?: number; // Reduces war impact (0 to 1)
   royalFavorBoost?: number; // Increases royal favor probability (0 to 1)
   warProbabilityReduction?: number; // Reduces war probability (0 to 1)
-  gloryMultiplier?: number; // Multiplies glory earned (e.g., 1.1 for +10%)
+
   eventSeed?: number;
 }
 
@@ -54,28 +61,43 @@ function calculateCompound(params: ICalculatorParams): ICalculationResult {
   const random = createSeededRandom(params.eventSeed ?? 1);
 
   for (let year = 1; year <= years; year++) {
-    const valueAtStartOfYear = currentValue;
+
+    const monthsData: IMonthData[] = [];
+    let yearInterestGained = 0;
+
     for (let month = 1; month <= 12; month++) {
+      const valueAtStartOfMonth = currentValue;
       currentValue += monthlyContribution;
       currentValue *= (1 + monthlyRate);
+      const interestThisMonth = currentValue - valueAtStartOfMonth - monthlyContribution;
+      yearInterestGained += interestThisMonth;
+
+      monthsData.push({
+        month: month,
+        value: parseFloat(currentValue.toFixed(2)),
+        contribution: monthlyContribution,
+        interest: parseFloat(interestThisMonth.toFixed(2)),
+      });
     }
-    const interestGained = currentValue - valueAtStartOfYear - (monthlyContribution * 12);
     const totalContributions = initialDeposit + (monthlyContribution * 12 * year);
-    const gloryEarned = Math.floor(interestGained > 0 ? (interestGained / 1000) * (params.gloryMultiplier ?? 1) : 0);
     
     let yearResult: IYearData = {
       year: year,
       value: currentValue,
-      interest: interestGained,
+      interest: yearInterestGained,
       totalContributions: totalContributions,
-      gloryEarned: gloryEarned,
+      months: monthsData,
     };
 
     if (difficulty === 'hard') {
         const { modifiedData, eventHappened } = processEvents(yearResult, params, random);
         if(eventHappened) {
             yearResult = modifiedData;
-            currentValue = modifiedData.value;
+            currentValue = modifiedData.value; // Update currentValue for next year's calculation
+            // Also update the last month's value to reflect event impact
+            if (yearResult.months.length > 0) {
+                yearResult.months[yearResult.months.length - 1].value = parseFloat(modifiedData.value.toFixed(2));
+            }
             eventLog.push({ year, event: eventHappened });
         }
     }
@@ -91,32 +113,60 @@ function calculateSimple(params: ICalculatorParams): ICalculationResult {
     const { initialDeposit, monthlyContribution, years, annualRate, difficulty } = params;
     const results: IYearData[] = [];
     const eventLog: IEventInstance[] = [];
-    let totalInterest = 0;
+    let totalInterestAccumulated = 0; // Accumulated interest from previous years
+    let currentValue = initialDeposit;
     const random = createSeededRandom(params.eventSeed ?? 1);
 
     for (let year = 1; year <= years; year++) {
         const principalAtStartOfYear = initialDeposit + (monthlyContribution * 12 * (year - 1));
-        const interestGained = principalAtStartOfYear * (annualRate / 100);
-        totalInterest += interestGained;
+        const yearInterestGained = principalAtStartOfYear * (annualRate / 100);
+        totalInterestAccumulated += yearInterestGained; // Accumulate yearly interest
 
+        const monthsData: IMonthData[] = [];
+        let monthStartValue = currentValue; // Value at the start of the year for simple interest
+        if (year > 1) { // For subsequent years, start with the value from the end of previous year
+             monthStartValue = results[results.length - 1].value;
+        } else {
+             monthStartValue = initialDeposit;
+        }
+
+        let currentMonthlyValue = monthStartValue;
+
+        for (let month = 1; month <= 12; month++) {
+            currentMonthlyValue += monthlyContribution;
+
+
+            const interestThisMonth = yearInterestGained / 12; // Evenly distributed annual interest
+
+            currentMonthlyValue += interestThisMonth; // Add the monthly portion of annual interest
+
+
+            monthsData.push({
+                month: month,
+                value: parseFloat(currentMonthlyValue.toFixed(2)),
+                contribution: monthlyContribution,
+                interest: parseFloat(interestThisMonth.toFixed(2)),
+            });
+        }
+        
         const totalContributions = initialDeposit + (monthlyContribution * 12 * year);
-        const currentValue = totalContributions + totalInterest;
-        const gloryEarned = Math.floor(interestGained > 0 ? (interestGained / 1000) * (params.gloryMultiplier ?? 1) : 0);
-
+        
         let yearResult: IYearData = {
             year: year,
-            value: currentValue,
-            interest: interestGained,
+            value: currentMonthlyValue, // Final value after all months
+            interest: yearInterestGained,
             totalContributions: totalContributions,
-            gloryEarned: gloryEarned,
+            months: monthsData,
         };
 
         if (difficulty === 'hard') {
             const { modifiedData, eventHappened } = processEvents(yearResult, params, random);
             if(eventHappened) {
                 yearResult = modifiedData;
-                // In simple interest, events might affect the total value, but not future interest calculations
-                // which are based on principal. This is a design choice.
+                // Also update the last month's value to reflect event impact
+                if (yearResult.months.length > 0) {
+                    yearResult.months[yearResult.months.length - 1].value = parseFloat(modifiedData.value.toFixed(2));
+                }
                 eventLog.push({ year, event: eventHappened });
             }
         }

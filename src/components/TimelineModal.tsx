@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from '../contexts/LanguageContext';
 import type { IYearData } from '../logic/calculator';
 import type { IEventInstance } from '../logic/events';
@@ -9,10 +9,12 @@ interface TimelineModalProps {
   results: IYearData[];
   eventLog: IEventInstance[];
   currency: string;
+  currencySymbol: string; // Add currencySymbol prop
 }
 
-const TimelineModal: React.FC<TimelineModalProps> = ({ isOpen, onClose, results, eventLog, currency }) => {
+const TimelineModal: React.FC<TimelineModalProps> = ({ isOpen, onClose, results, eventLog, currency, currencySymbol }) => {
   const { t, language } = useTranslation();
+  const [expandedYear, setExpandedYear] = useState<number | null>(null);
 
   if (!isOpen) {
     return null;
@@ -20,6 +22,10 @@ const TimelineModal: React.FC<TimelineModalProps> = ({ isOpen, onClose, results,
   
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat(language, { style: 'currency', currency, minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
+  }
+
+  const formatCurrencyWithSymbol = (value: number) => {
+    return `${currencySymbol}${value.toLocaleString(language === 'ru' ? 'ru-RU' : 'en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
   }
 
   return (
@@ -43,16 +49,51 @@ const TimelineModal: React.FC<TimelineModalProps> = ({ isOpen, onClose, results,
             <tbody>
               {results.map(res => {
                 const eventForYear = eventLog.find(e => e.year === res.year);
+                const isExpanded = expandedYear === res.year;
                 return (
-                  <tr key={res.year} className="border-b border-rich-gold/10">
-                    <td className="p-2 font-bold">{res.year}</td>
-                    <td className="p-2 font-bold text-forest-green">{formatCurrency(res.value)}</td>
-                    <td className="p-2 text-forest-green">+{formatCurrency(res.interest)}</td>
-                    <td className="p-2">{formatCurrency(res.totalContributions)}</td>
-                    <td className="p-2 text-sm italic">
-                      {eventForYear ? t(eventForYear.event.nameKey) : '---'}
-                    </td>
-                  </tr>
+                  <React.Fragment key={res.year}>
+                    <tr 
+                      onClick={() => setExpandedYear(isExpanded ? null : res.year)}
+                      className="border-b border-rich-gold/10 hover:bg-bg-light cursor-pointer transition-colors"
+                    >
+                      <td className="p-2 font-bold">{res.year}</td>
+                      <td className="p-2 font-bold text-forest-green">{formatCurrency(res.value)}</td>
+                      <td className="p-2 text-forest-green">+{formatCurrency(res.interest)}</td>
+                      <td className="p-2">{formatCurrency(res.totalContributions)}</td>
+                      <td className="p-2 text-sm italic">
+                        {eventForYear ? t(eventForYear.event.nameKey) : '---'}
+                      </td>
+                    </tr>
+                    {isExpanded && (
+                      <tr>
+                        <td colSpan={5} className="p-0">
+                          <div className="bg-bg-light p-4 rounded-b-lg">
+                            <h4 className="font-semibold text-text-heading mb-2">{t('monthlyBreakdownTitle', { year: res.year })}</h4>
+                            <table className="w-full text-left text-sm">
+                              <thead>
+                                <tr className="border-b border-gray-600/50">
+                                  <th className="p-1">{t('timeline_month')}</th>
+                                  <th className="p-1">{t('timeline_monthValue')}</th>
+                                  <th className="p-1">{t('timeline_monthContribution')}</th>
+                                  <th className="p-1">{t('timeline_monthInterest')}</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {res.months.map(monthData => (
+                                  <tr key={monthData.month} className="border-b border-gray-700/30 last:border-b-0">
+                                    <td className="p-1">{monthData.month}</td>
+                                    <td className="p-1">{formatCurrencyWithSymbol(monthData.value)}</td>
+                                    <td className="p-1">{formatCurrencyWithSymbol(monthData.contribution)}</td>
+                                    <td className="p-1">+{formatCurrencyWithSymbol(monthData.interest)}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
                 );
               })}
             </tbody>

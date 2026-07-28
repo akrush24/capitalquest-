@@ -1,18 +1,7 @@
 import React, { useState } from 'react';
 import { useTranslation } from '../contexts/LanguageContext';
 import { SKILL_TREE } from '../logic/skillTree';
-import type { ICalculatorParams } from '../logic/calculator';
-
-// Workaround for broken type exporting in this environment
-interface ISkillNode {
-  id: string;
-  nameKey: string;
-  descriptionKey: string;
-  costGlory: number;
-  effect: (params: Omit<ICalculatorParams, 'isCompound' | 'difficulty'>) => Omit<ICalculatorParams, 'isCompound' | 'difficulty'>;
-  prerequisites: string[];
-  branch: 'economy' | 'defense' | 'diplomacy';
-}
+import type { ISkillNode } from '../logic/skillTree';
 
 
 type Branch = 'economy' | 'defense' | 'diplomacy';
@@ -38,33 +27,28 @@ interface SkillTreeModalProps {
   onClose: () => void;
   onUnlock: (skill: ISkillNode) => void;
   unlockedSkills: string[];
-  currentGlory: number;
 }
 
 const SkillNode: React.FC<{
     skill: ISkillNode;
     onUnlock: (skill: ISkillNode) => void;
     isUnlocked: boolean;
-    canAfford: boolean;
     prerequisitesMet: boolean;
-}> = ({ skill, onUnlock, isUnlocked, canAfford, prerequisitesMet }) => {
+}> = ({ skill, onUnlock, isUnlocked, prerequisitesMet }) => {
     const { t } = useTranslation();
-    const isUnlockable = !isUnlocked && canAfford && prerequisitesMet;
+    const isUnlockable = !isUnlocked && prerequisitesMet;
     
     return (
         <div className={`p-4 rounded-md border-2 ${isUnlocked ? 'border-rich-gold' : prerequisitesMet ? 'border-rich-gold/50' : 'border-gray-600'}`}>
             <h4 className="font-bold text-text-heading">{t(skill.nameKey)}</h4>
             <p className="text-sm italic my-1">{t(skill.descriptionKey)}</p>
-            <p className="text-sm font-semibold text-rich-gold">
-                {t('skill_costGlory', { cost: skill.costGlory })}
-            </p>
+
             <button 
                 onClick={() => onUnlock(skill)}
                 disabled={!isUnlockable}
                 className={`w-full mt-3 py-1 px-3 rounded-md font-semibold transition-colors text-sm ${
                     isUnlocked ? 'bg-forest-green text-white cursor-not-allowed' 
                     : !prerequisitesMet ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
-                    : !canAfford ? 'bg-red-900/50 text-red-300 cursor-not-allowed'
                     : 'bg-rich-gold text-bg-main hover:bg-yellow-400'
                 }`}
             >
@@ -75,7 +59,7 @@ const SkillNode: React.FC<{
 }
 
 
-const SkillTreeModal: React.FC<SkillTreeModalProps> = ({ isOpen, onClose, onUnlock, unlockedSkills, currentGlory }) => {
+const SkillTreeModal: React.FC<SkillTreeModalProps> = ({ isOpen, onClose, onUnlock, unlockedSkills }) => {
   const { t } = useTranslation();
   const [activeBranch, setActiveBranch] = useState<Branch>('economy');
 
@@ -95,7 +79,6 @@ const SkillTreeModal: React.FC<SkillTreeModalProps> = ({ isOpen, onClose, onUnlo
                         skill={skill}
                         onUnlock={onUnlock}
                         isUnlocked={unlockedSkills.includes(skill.id)}
-                        canAfford={currentGlory >= skill.costGlory}
                         prerequisitesMet={prerequisitesMet}
                     />
                 )

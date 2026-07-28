@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import AnimatedNumber from './components/AnimatedNumber';
 import SliderInput from './components/SliderInput';
 import { calculateInterest } from './logic/calculator';
@@ -13,9 +13,10 @@ import { UPGRADES } from './logic/upgrades';
 import TimelineModal from './components/TimelineModal';
 import CrestSelector, { CRESTS } from './components/CrestSelector';
 import CrestDisplay from './components/crests/CrestDisplay';
-import Advisor from './components/Advisor';
+
 import SkillTreeModal from './components/SkillTreeModal';
 import CapitalChart from './components/CapitalChart';
+import HelpModal from './components/HelpModal';
 import { SKILL_TREE } from './logic/skillTree';
 import type { ISkillNode } from './logic/skillTree';
 
@@ -29,17 +30,21 @@ interface IUpgrade {
 }
 
 const TIERS = [
-    { limit: 25000,    path: '/images/tent.svg',     nameKey: 'tier_tent' },
-    { limit: 100000,   path: '🏕️', nameKey: 'tier_camp' },
-    { limit: 250000,   path: '🛖', nameKey: 'tier_hut' },
-    { limit: 750000,   path: '🏡', nameKey: 'tier_house' },
-    { limit: 2000000,  path: '🏘️', nameKey: 'tier_village' },
+    { limit: 10000,    path: '🌱', nameKey: 'tier_seedling' },
+    { limit: 25000,    path: '⛺',     nameKey: 'tier_tent' },
+    { limit: 50000,    path: '🏕️', nameKey: 'tier_camp' },
+    { limit: 100000,   path: '🛖', nameKey: 'tier_hut' },
+    { limit: 250000,   path: '🏡', nameKey: 'tier_house' },
+    { limit: 500000,   path: '🌳',     nameKey: 'tier_tree' },
+    { limit: 1000000,  path: '🏘️', nameKey: 'tier_village' },
+    { limit: 2500000,  path: '🏡',     nameKey: 'tier_settlement' },
     { limit: 5000000,  path: '⛪', nameKey: 'tier_town' },
-    { limit: 15000000, path: '🏰', nameKey: 'tier_castle' },
-    { limit: 50000000, path: '🏛️', nameKey: 'tier_citadel' },
-    { limit: 150000000, path: '🏙️', nameKey: 'tier_city' },
-    { limit: 500000000, path: '✨🏙️✨', nameKey: 'tier_metropolis' },
-    { limit: 2000000000, path: '👑', nameKey: 'tier_kingdom' },
+    { limit: 10000000, path: '🛡️',   nameKey: 'tier_fortress' },
+    { limit: 25000000, path: '🏰', nameKey: 'tier_castle' },
+    { limit: 75000000, path: '🏛️', nameKey: 'tier_citadel' },
+    { limit: 200000000, path: '🏙️', nameKey: 'tier_city' },
+    { limit: 750000000, path: '✨🏙️✨', nameKey: 'tier_metropolis' },
+    { limit: 2500000000, path: '👑', nameKey: 'tier_kingdom' },
     { limit: Infinity,   path: '🌌', nameKey: 'tier_utopia' },
 ];
 
@@ -63,15 +68,15 @@ function App() {
   const [purchasedUpgrades, setPurchasedUpgrades] = useState<string[]>([]);
   const [spentOnUpgrades, setSpentOnUpgrades] = useState(0);
   const [unlockedSkills, setUnlockedSkills] = useState<string[]>([]);
-  const [spentGlory, setSpentGlory] = useState(0);
+
   const [isSkillTreeModalOpen, setIsSkillTreeModalOpen] = useState(false);
+  const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
   const [eventSeed, setEventSeed] = useState(() => Math.floor(Math.random() * 2 ** 32));
 
   const [currency, setCurrency] = useState('RUB');
   const [linkCopiedMessage, setLinkCopiedMessage] = useState(false);
-  const [advisorMessageKey, setAdvisorMessageKey] = useState<string | null>('advisor_welcome');
-  const advisorTimeoutRef = useRef<number | null>(null);
-  const previousTierRef = useRef<string | null>(null);
+
+
 
   const CURRENCY_SYMBOLS: { [key: string]: string } = { RUB: '₽', USD: '$', EUR: '€' };
 
@@ -94,7 +99,7 @@ function App() {
         setPurchasedUpgrades(savedState.purchasedUpgrades || []);
         setSpentOnUpgrades(savedState.spentOnUpgrades ?? 0);
         setUnlockedSkills(savedState.unlockedSkills || []);
-        setSpentGlory(savedState.spentGlory ?? 0);
+
         setEventSeed(savedState.eventSeed ?? Math.floor(Math.random() * 2 ** 32));
         setCurrency(savedState.currency || 'RUB');
         setLanguage(savedState.language || 'ru');
@@ -104,20 +109,9 @@ function App() {
     }
   }, [setLanguage, t]);
 
-  const showAdvisorMessage = (key: string, duration: number = 8000) => {
-    if (advisorTimeoutRef.current) {
-        clearTimeout(advisorTimeoutRef.current);
-    }
-    setAdvisorMessageKey(key);
-    advisorTimeoutRef.current = window.setTimeout(() => {
-        setAdvisorMessageKey(null);
-    }, duration);
-  };
 
-  useEffect(() => {
-    setQuestTitle(t('questTitle'));
-    showAdvisorMessage('advisor_welcome');
-  }, [t]);
+
+
 
 
   // Update currency when language changes, but only if not loading from URL
@@ -151,10 +145,7 @@ function App() {
     return { ...campaign, simpleResults };
   }, [baseParams, isCompound, difficulty, eventSeed, purchasedUpgrades, unlockedSkills]);
 
-  const totalGlory = useMemo(
-    () => results.reduce((sum, year) => sum + year.gloryEarned, 0),
-    [results],
-  );
+
 
   const unlockedAchievements = useMemo(() => {
     const achievements: IAchievement[] = [];
@@ -167,21 +158,9 @@ function App() {
     return achievements;
   }, [baseParams.monthlyContribution, results, t]);
 
-  const availableGlory = Math.max(0, totalGlory - spentGlory);
 
-  useEffect(() => {
-    if (eventLog.length > 0) {
-      const lastEvent = eventLog[eventLog.length - 1];
-      showAdvisorMessage(`advisor_event_${lastEvent.event.id}`);
-    }
 
-    const currentTierValue = results.at(-1)?.value ?? 0;
-    const currentTier = TIERS.find(tier => currentTierValue < tier.limit);
-    if (currentTier && previousTierRef.current && previousTierRef.current !== currentTier.nameKey) {
-      showAdvisorMessage('advisor_milestone_kingdom_reach');
-    }
-    previousTierRef.current = currentTier?.nameKey ?? null;
-  }, [eventLog, results]);
+
 
 
   const handleParamChange = (paramName: keyof typeof baseParams, value: number) => {
@@ -195,25 +174,31 @@ function App() {
 
   const handleUnlockSkill = (skill: ISkillNode) => {
     const prerequisitesMet = skill.prerequisites.every(id => unlockedSkills.includes(id));
-    if (unlockedSkills.includes(skill.id) || !prerequisitesMet || availableGlory < skill.costGlory) {
+    if (unlockedSkills.includes(skill.id) || !prerequisitesMet) {
       return;
     }
-    setSpentGlory(previous => previous + skill.costGlory);
     setUnlockedSkills(previous => [...previous, skill.id]);
   };
 
   const handleShare = () => {
     const stateToSave = {
       questTitle, selectedCrest, baseParams, isCompound, difficulty,
-      purchasedUpgrades, spentOnUpgrades, unlockedSkills, spentGlory, eventSeed, currency, language,
+      purchasedUpgrades, spentOnUpgrades, unlockedSkills, eventSeed, currency, language,
     };
     const encodedState = btoa(encodeURIComponent(JSON.stringify(stateToSave)));
     const shareableUrl = `${window.location.origin}${window.location.pathname}?data=${encodedState}`;
     
-    navigator.clipboard.writeText(shareableUrl).then(() => {
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(shareableUrl).then(() => {
+        setLinkCopiedMessage(true);
+        setTimeout(() => setLinkCopiedMessage(false), 2000);
+      }).catch(err => console.error("Failed to copy link using clipboard API:", err));
+    } else {
+      // Fallback for insecure contexts or browsers without clipboard API
+      window.prompt("Скопируйте ссылку вручную:", shareableUrl);
       setLinkCopiedMessage(true);
       setTimeout(() => setLinkCopiedMessage(false), 2000);
-    }).catch(err => console.error("Failed to copy link:", err));
+    }
   };
 
   const handleCrestSelect = (crest: string) => {
@@ -228,26 +213,26 @@ function App() {
 
   return (
     <div className="bg-bg-main min-h-screen text-text-main font-lora p-4 sm:p-8">
-      <Advisor messageKey={advisorMessageKey} />
+
       <header className="mb-8">
         <div className="flex flex-wrap justify-center sm:justify-between items-center gap-4 mb-4">
             <div className="flex justify-center items-center">
-                <button onClick={() => setIsCrestModalOpen(true)} className="p-2 rounded-full hover:bg-rich-gold/20 transition-colors">
-                    <CrestDisplay crestId={selectedCrest} className="w-12 h-12" />
+                <button onClick={() => setIsCrestModalOpen(true)} className="bg-panel-bg border border-rich-gold/50 text-rich-gold font-bold py-2 px-3 rounded-md hover:bg-rich-gold/20 transition-colors text-sm flex items-center gap-2">
+                    <CrestDisplay crestId={selectedCrest} className="w-8 h-8" />
+                    <span>{t('crestLabel')}</span>
                 </button>
                 <input
                   type="text" value={questTitle} onChange={(e) => setQuestTitle(e.target.value)}
                   className="text-4xl sm:text-5xl font-bold text-rich-gold font-medieval bg-transparent text-center focus:outline-none p-2 max-w-full"
                 />
             </div>
-            <div className="flex items-center flex-wrap justify-center gap-2">
-                <div className="flex items-center space-x-1 bg-panel-bg border border-rich-gold/50 rounded-md px-3 py-2">
-                    <span className="text-xl">⭐</span>
-                    <span className="font-bold text-text-heading">{availableGlory}</span>
-                    <span className="text-sm hidden sm:inline">{t('glory')}</span>
-                </div>
+            <div className="flex items-center gap-2">
                 {linkCopiedMessage && <span className="text-sm text-forest-green animate-fade-in">{t('linkCopied')}</span>}
                 <button onClick={handleShare} className="bg-rich-gold text-bg-main font-bold py-2 px-3 rounded-md hover:bg-yellow-400 transition-colors text-sm">{t('share')}</button>
+                <button onClick={() => setIsHelpModalOpen(true)} className="bg-panel-bg border border-rich-gold/50 text-rich-gold font-bold py-2 px-3 rounded-md hover:bg-rich-gold/20 transition-colors text-sm">{t('helpTitle')}</button>
+            </div>
+            <div className="flex items-center flex-wrap justify-center gap-2">
+
                 <button onClick={() => setIsSkillTreeModalOpen(true)} className="bg-panel-bg border border-rich-gold/50 text-rich-gold font-bold py-2 px-3 rounded-md hover:bg-rich-gold/20 transition-colors text-sm">{t('skillTree')}</button>
                 <select value={currency} onChange={(e) => setCurrency(e.target.value)} className="bg-panel-bg border border-rich-gold/50 text-text-heading font-semibold py-2 px-3 rounded-md focus:outline-none focus:ring-2 focus:ring-rich-gold text-sm">
                   <option value="RUB">RUB</option> <option value="USD">USD</option> <option value="EUR">EUR</option>
@@ -302,9 +287,10 @@ function App() {
       </main>
       <CapitalChart results={results} simpleResults={simpleResults} inflationRate={baseParams.inflationRate} currency={currency} />
       <UpgradesModal isOpen={isUpgradesModalOpen} onClose={() => setIsUpgradesModalOpen(false)} onPurchase={handlePurchaseUpgrade} purchasedIds={purchasedUpgrades} treasury={treasury} currencySymbol={CURRENCY_SYMBOLS[currency]} />
-      <TimelineModal isOpen={isTimelineModalOpen} onClose={() => setIsTimelineModalOpen(false)} results={results} eventLog={eventLog} currency={currency} />
+      <TimelineModal isOpen={isTimelineModalOpen} onClose={() => setIsTimelineModalOpen(false)} results={results} eventLog={eventLog} currency={currency} currencySymbol={CURRENCY_SYMBOLS[currency]} />
       <CrestSelector isOpen={isCrestModalOpen} onClose={() => setIsCrestModalOpen(false)} onSelect={handleCrestSelect} selectedCrest={selectedCrest} />
-      <SkillTreeModal isOpen={isSkillTreeModalOpen} onClose={() => setIsSkillTreeModalOpen(false)} onUnlock={handleUnlockSkill} unlockedSkills={unlockedSkills} currentGlory={availableGlory} />
+      <SkillTreeModal isOpen={isSkillTreeModalOpen} onClose={() => setIsSkillTreeModalOpen(false)} onUnlock={handleUnlockSkill} unlockedSkills={unlockedSkills} />
+      <HelpModal isOpen={isHelpModalOpen} onClose={() => setIsHelpModalOpen(false)} tiers={TIERS} />
     </div>
   )
 }

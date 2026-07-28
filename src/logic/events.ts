@@ -38,7 +38,6 @@ const EVENTS: IEvent[] = [
     apply: (data, params) => ({
       ...data,
       value: data.value * (1 - 0.1 * (1 - (params.plagueImpactReduction || 0))), // 10% reduction, mitigated by skill
-      gloryEarned: data.gloryEarned * (1 - 0.5 * (1 - (params.plagueImpactReduction || 0))), // Halve glory, mitigated
     }),
   },
   {
@@ -72,7 +71,6 @@ const EVENTS: IEvent[] = [
     apply: (data, params) => ({
       ...data,
       value: data.value * (1 - 0.3 * (1 - (params.warImpactReduction || 0))), // 30% reduction, mitigated
-      gloryEarned: 0, // No glory this year, not mitigated yet
     }),
   },
 ];
