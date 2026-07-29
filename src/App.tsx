@@ -111,8 +111,11 @@ function App() {
   }, [setLanguage, t]);
 
 
-
-
+  useEffect(() => {
+    if (!questTitle) {
+      setQuestTitle(t('questTitle'));
+    }
+  }, [t, questTitle]);
 
 
   // Update currency when language changes, but only if not loading from URL
@@ -213,7 +216,7 @@ function App() {
   const treasury = finalValue;
 
   return (
-    <div className="bg-bg-main min-h-screen text-text-main font-lora p-4 sm:p-8">
+    <div className="bg-bg-main min-h-screen text-text-main font-medieval p-4 sm:p-8">
 
       <header className="mb-8">
         <div className="flex flex-wrap justify-center sm:justify-between items-center gap-4 mb-4">
