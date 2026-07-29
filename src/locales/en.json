@@ -59,6 +59,8 @@
   "tier_metropolis": "Metropolis",
   "tier_kingdom": "Kingdom",
   "tier_utopia": "Utopia",
+  "tier_galaxy": "Galaxy",
+  "tier_universe": "Universe",
   "tier_seedling": "Seedling",
   "tier_tree": "Tree",
   "tier_settlement": "Settlement",

@@ -48,11 +48,11 @@ const SliderInput: React.FC<SliderInputProps> = ({ label, metaphor, value, onCha
 
   return (
     <div className="space-y-2">
-      <div className="flex justify-between items-baseline">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-baseline">
         <label className="font-semibold text-text-heading">{label}</label>
         <span className="text-sm text-text-main italic">{metaphor}</span>
       </div>
-      <div className="flex items-center space-x-4">
+      <div className="flex flex-col sm:flex-row items-center sm:space-x-4 space-y-4 sm:space-y-0">
         <input
           type="range"
           min={min}
@@ -62,7 +62,7 @@ const SliderInput: React.FC<SliderInputProps> = ({ label, metaphor, value, onCha
           onChange={handleRangeChange}
           className="w-full h-2 bg-bg-main rounded-lg appearance-none cursor-pointer"
         />
-        <div className="flex items-center bg-bg-main rounded-md border border-rich-gold/20">
+        <div className="flex items-center w-full bg-bg-main rounded-md border border-rich-gold/20">
            <input
             type="number"
             min={min}
@@ -71,7 +71,7 @@ const SliderInput: React.FC<SliderInputProps> = ({ label, metaphor, value, onCha
             value={inputValue} // Use inputValue for the text input
             onChange={handleTextChange} // Use handleTextChange for the text input
             onBlur={handleBlur} // Add onBlur handler
-            className="bg-transparent w-36 text-center font-semibold text-text-heading p-2 focus:outline-none"
+            className="bg-transparent w-full sm:w-36 text-center font-semibold text-text-heading p-2 focus:outline-none"
           />
           {unit && <span className="pr-3 text-text-main">{unit}</span>}
         </div>
